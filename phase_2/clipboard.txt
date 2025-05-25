@@ -1,0 +1,17 @@
+-- This creates a table to store user information
+CREATE TABLE users (
+    user_id INT(11) NOT NULL AUTO_INCREMENT,          -- Unique ID for each user
+    username VARCHAR(50) NOT NULL UNIQUE,             -- Username (must be unique)
+    email VARCHAR(100) NOT NULL UNIQUE,               -- Email (must be unique)
+    password VARCHAR(255) NOT NULL,                   -- Encrypted password
+    first_name VARCHAR(50) NOT NULL,                  -- User's first name
+    last_name VARCHAR(50) NOT NULL,                   -- User's last name
+    city VARCHAR(100) DEFAULT NULL,                   -- City (optional)
+    country VARCHAR(10) DEFAULT NULL,                 -- Country (optional)
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,   -- When account was created
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    last_login TIMESTAMP NULL DEFAULT NULL,           -- When user last logged in
+    is_active TINYINT(1) DEFAULT 1,                  -- Is account active? (1=yes, 0=no)
+    user_type ENUM('student', 'teacher', 'admin') DEFAULT 'student',  -- Type of user
+    PRIMARY KEY (user_id)                             -- Makes user_id the main key
+);
