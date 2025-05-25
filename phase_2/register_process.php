@@ -1,163 +1,170 @@
-<?php
-// register_process.php - Handle registration requests
-
-require_once 'config.php';
-
-header('Content-Type: application/json');
-
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-    echo json_encode(['success' => false, 'message' => 'Method not allowed']);
-    exit();
-}
-
-try {
-    // Get input data
-    $input = json_decode(file_get_contents('php://input'), true);
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moodle Login - IUL</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="login-styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="header">
+        <div class="container">
+            <div class="logo">
+                <img src="images/logo.png" alt="IUL Logo">
+            </div>
+        </div>
+    </div>
     
-    if (!$input) {
-        // Fallback to form data
-        $username = sanitizeInput($_POST['new-username'] ?? '');
-        $password = $_POST['new-password'] ?? '';
-        $email = sanitizeInput($_POST['email'] ?? '');
-        $emailAgain = sanitizeInput($_POST['email-again'] ?? '');
-        $firstName = sanitizeInput($_POST['firstname'] ?? '');
-        $lastName = sanitizeInput($_POST['lastname'] ?? '');
-        $city = sanitizeInput($_POST['city'] ?? '');
-        $country = sanitizeInput($_POST['country'] ?? '');
-    } else {
-        $username = sanitizeInput($input['username'] ?? '');
-        $password = $input['password'] ?? '';
-        $email = sanitizeInput($input['email'] ?? '');
-        $emailAgain = sanitizeInput($input['emailAgain'] ?? '');
-        $firstName = sanitizeInput($input['firstName'] ?? '');
-        $lastName = sanitizeInput($input['lastName'] ?? '');
-        $city = sanitizeInput($input['city'] ?? '');
-        $country = sanitizeInput($input['country'] ?? '');
-    }
+    <div class="nav-menu">
+        <div class="container nav-container">
+            <ul>
+                <li>
+                    <a href="index.html">Home</a>
+                </li>
+                <li>
+                    <a href="#">About <i class="fas fa-chevron-down"></i></a>
+                </li>
+                <li>
+                    <a href="#">Admission <i class="fas fa-chevron-down"></i></a>
+                </li>
+                <li>
+                    <a href="#">Academics <i class="fas fa-chevron-down"></i></a>
+                </li>
+                <li>
+                    <a href="#">Library <i class="fas fa-chevron-down"></i></a>
+                </li>
+                <li>
+                    <a href="#">Campuses <i class="fas fa-chevron-down"></i></a>
+                </li>
+                <li>
+                    <a href="#">Centers <i class="fas fa-chevron-down"></i></a>
+                </li>
+            </ul>
+            <div class="search-icon">
+                <a href="#"><i class="fas fa-search"></i></a>
+            </div>
+        </div>
+    </div>
     
-    // Validate required fields
-    if (empty($username) || empty($password) || empty($email) || empty($emailAgain) || empty($firstName) || empty($lastName)) {
-        echo json_encode(['success' => false, 'message' => 'Please fill in all required fields']);
-        exit();
-    }
-    
-    // Validate username length
-    if (strlen($username) < 3 || strlen($username) > 50) {
-        echo json_encode(['success' => false, 'message' => 'Username must be between 3 and 50 characters']);
-        exit();
-    }
-    
-    // Validate username format (alphanumeric and underscore only)
-    if (!preg_match('/^[a-zA-Z0-9_]+$/', $username)) {
-        echo json_encode(['success' => false, 'message' => 'Username can only contain letters, numbers, and underscores']);
-        exit();
-    }
-    
-    // Validate email
-    if (!validateEmail($email)) {
-        echo json_encode(['success' => false, 'message' => 'Please enter a valid email address']);
-        exit();
-    }
-    
-    // Check if emails match
-    if ($email !== $emailAgain) {
-        echo json_encode(['success' => false, 'message' => 'Email addresses do not match']);
-        exit();
-    }
-    
-    // Validate password
-    if (!validatePassword($password)) {
-        echo json_encode(['success' => false, 'message' => 'Password must have at least 8 characters, including 1 digit, 1 lowercase letter, 1 uppercase letter, and 1 special character']);
-        exit();
-    }
-    
-    // Validate name lengths
-    if (strlen($firstName) > 50 || strlen($lastName) > 50) {
-        echo json_encode(['success' => false, 'message' => 'First name and last name must be less than 50 characters']);
-        exit();
-    }
-    
-    // Check if username already exists
-    $checkUserStmt = $db->prepare("SELECT user_id FROM users WHERE username = ?");
-    $checkUserStmt->execute([$username]);
-    if ($checkUserStmt->fetch()) {
-        echo json_encode(['success' => false, 'message' => 'Username already exists. Please choose a different username']);
-        exit();
-    }
-    
-    // Check if email already exists
-    $checkEmailStmt = $db->prepare("SELECT user_id FROM users WHERE email = ?");
-    $checkEmailStmt->execute([$email]);
-    if ($checkEmailStmt->fetch()) {
-        echo json_encode(['success' => false, 'message' => 'Email address already registered. Please use a different email or try logging in']);
-        exit();
-    }
-    
-    // Hash password
-    $hashedPassword = hashPassword($password);
-    
-    // Insert new user
-    $insertStmt = $db->prepare("
-        INSERT INTO users (username, email, password, first_name, last_name, city, country) 
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-    ");
-    
-    $insertResult = $insertStmt->execute([
-        $username,
-        $email,
-        $hashedPassword,
-        $firstName,
-        $lastName,
-        $city ?: null,
-        $country ?: null
-    ]);
-    
-    if ($insertResult) {
-        $userId = $db->lastInsertId();
+    <div class="moodle-container">
+        <div class="login-section">
+            <div class="login-box">
+                <h2>Log in to Moodle Site</h2>
+                <form id="login-form" method="POST" action="login_process.php">
+                    <div class="form-group">
+                        <input type="text" id="username" name="username" placeholder="Username or email" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="password" id="password" name="password" placeholder="Password" required>
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" class="login-btn">Log in</button>
+                    </div>
+                    <div class="form-links">
+                        <a href="#" class="forgot-link">Lost password?</a>
+                    </div>
+                    
+                    <div class="signup-section">
+                        <h3>Is this your first time here?</h3>
+                        <p>For full access to this site, you first need to create an account.</p>
+                        <button type="button" id="show-signup-btn" class="create-account-btn">Create new account</button>
+                    </div>
+                </form>
+            </div>
+        </div>
         
-        // Automatically log in the new user
-        session_regenerate_id(true);
-        $_SESSION['user_id'] = $userId;
-        $_SESSION['username'] = $username;
-        $_SESSION['email'] = $email;
-        $_SESSION['first_name'] = $firstName;
-        $_SESSION['last_name'] = $lastName;
-        $_SESSION['user_type'] = 'student';
-        $_SESSION['login_time'] = time();
-        
-        // Create session record
-        $sessionId = generateSessionId();
-        $sessionStmt = $db->prepare("INSERT INTO user_sessions (session_id, user_id, ip_address, user_agent, expires_at) VALUES (?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL ? SECOND))");
-        $sessionStmt->execute([
-            $sessionId,
-            $userId,
-            $_SERVER['REMOTE_ADDR'] ?? 'unknown',
-            $_SERVER['HTTP_USER_AGENT'] ?? 'unknown',
-            SESSION_EXPIRE_TIME
-        ]);
-        
-        $_SESSION['session_id'] = $sessionId;
-        
-        echo json_encode([
-            'success' => true,
-            'message' => 'Account created successfully! You are now logged in.',
-            'user' => [
-                'username' => $username,
-                'first_name' => $firstName,
-                'last_name' => $lastName,
-                'user_type' => 'student'
-            ]
-        ]);
-    } else {
-        echo json_encode(['success' => false, 'message' => 'Failed to create account. Please try again.']);
-    }
+        <div class="signup-section" id="signup-box">
+            <div class="signup-box">
+                <h2>New Account</h2>
+                <form id="signup-form" method="POST" action="register_process.php">
+                    <div class="form-group">
+                        <label for="new-username">Username <span class="required">*</span></label>
+                        <input type="text" id="new-username" name="new-username" required>
+                    </div>
+                    
+                    <div class="password-info">
+                        The password must have at least 8 characters, at least 1 digit(s), at least 1 lower case letter(s), at least 1 upper case letter(s), at least 1 special character(s) such as *, -, or #
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="new-password">Password <span class="required">*</span></label>
+                        <input type="password" id="new-password" name="new-password" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="email">Email address <span class="required">*</span></label>
+                        <input type="email" id="email" name="email" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="email-again">Email (again) <span class="required">*</span></label>
+                        <input type="email" id="email-again" name="email-again" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="firstname">First name <span class="required">*</span></label>
+                        <input type="text" id="firstname" name="firstname" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="lastname">Last name <span class="required">*</span></label>
+                        <input type="text" id="lastname" name="lastname" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="city">City/town</label>
+                        <input type="text" id="city" name="city">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="country">Country</label>
+                        <select id="country" name="country">
+                            <option value="">Select a country</option>
+                            <option value="LB">Lebanon</option>
+                            <option value="SY">Syria</option>
+                            <option value="JO">Jordan</option>
+                            <option value="SA">Saudi Arabia</option>
+                            <option value="AE">United Arab Emirates</option>
+                            <option value="US">United States</option>
+                            <option value="UK">United Kingdom</option>
+                            <option value="FR">France</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-buttons">
+                        <button type="submit" class="create-btn">Create my new account</button>
+                        <button type="button" id="cancel-btn" class="cancel-btn">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
     
-} catch (PDOException $e) {
-    error_log("Database error in registration: " . $e->getMessage());
-    echo json_encode(['success' => false, 'message' => 'A database error occurred. Please try again.']);
-} catch (Exception $e) {
-    error_log("General error in registration: " . $e->getMessage());
-    echo json_encode(['success' => false, 'message' => 'An error occurred. Please try again.']);
-}
-?>
+    <div class="bottom-nav">
+        <a href="moodle.html" class="active">
+            <i class="fas fa-user"></i>
+            <span>Moodle</span>
+        </a>
+        <a href="#">
+            <i class="fas fa-user-graduate"></i>
+            <span>Student Portal</span>
+        </a>
+        <a href="#">
+            <i class="fas fa-chalkboard-teacher"></i>
+            <span>Teacher Portal</span>
+        </a>
+        <a href="#">
+            <i class="fas fa-envelope"></i>
+            <span>Academic Email</span>
+        </a>
+        <a href="#">
+            <i class="fas fa-envelope-open"></i>
+            <span>Staff Email</span>
+        </a>
+    </div>
+
+    <script src="moodle.js"></script>
+</body>
+</html>

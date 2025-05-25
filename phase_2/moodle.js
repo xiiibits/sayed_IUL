@@ -1,4 +1,4 @@
-// Updated moodle.js with PHP integration
+// moodle.js - Updated JavaScript for PHP integration
 
 document.addEventListener('DOMContentLoaded', function() {
     const loginForm = document.getElementById('login-form');
@@ -43,24 +43,23 @@ document.addEventListener('DOMContentLoaded', function() {
             const originalText = submitBtn.textContent;
             submitBtn.textContent = 'Logging in...';
             
+            // Create form data
+            const formData = new FormData();
+            formData.append('username', username);
+            formData.append('password', password);
+            
             // Send login request
             fetch('login_process.php', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    username: username,
-                    password: password
-                })
+                body: formData
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
                     showMessage(data.message, 'success');
-                    // Redirect to dashboard or success page
+                    // Redirect to dashboard
                     setTimeout(() => {
-                        window.location.href = 'dashboard.php'; // Create this page
+                        window.location.href = 'dashboard.php';
                     }, 1500);
                 } else {
                     showMessage(data.message, 'error');
@@ -83,42 +82,22 @@ document.addEventListener('DOMContentLoaded', function() {
         signupForm.addEventListener('submit', function(e) {
             e.preventDefault();
             
-            const formData = {
-                username: document.getElementById('new-username').value.trim(),
-                password: document.getElementById('new-password').value,
-                email: document.getElementById('email').value.trim(),
-                emailAgain: document.getElementById('email-again').value.trim(),
-                firstName: document.getElementById('firstname').value.trim(),
-                lastName: document.getElementById('lastname').value.trim(),
-                city: document.getElementById('city').value.trim(),
-                country: document.getElementById('country').value
-            };
-            
+            const password = document.getElementById('new-password').value;
+            const email = document.getElementById('email').value;
+            const emailAgain = document.getElementById('email-again').value;
             const submitBtn = signupForm.querySelector('.create-btn');
             
             // Client-side validation
-            if (!formData.username || !formData.password || !formData.email || 
-                !formData.emailAgain || !formData.firstName || !formData.lastName) {
-                showMessage('Please fill in all required fields', 'error');
-                return;
-            }
-            
-            if (formData.email !== formData.emailAgain) {
+            if (email !== emailAgain) {
                 showMessage('Email addresses do not match!', 'error');
                 return;
             }
             
             // Password validation
             const passwordRegex = /^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[*\-#@$!%^&(){}[\]:;<>,.?/~_+\\|])[a-zA-Z0-9*\-#@$!%^&(){}[\]:;<>,.?/~_+\\|]{8,}$/;
-            if (!passwordRegex.test(formData.password)) {
-                showMessage('Password does not meet the requirements.', 'error');
-                return;
-            }
             
-            // Email validation
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(formData.email)) {
-                showMessage('Please enter a valid email address', 'error');
+            if (!passwordRegex.test(password)) {
+                showMessage('Password does not meet the requirements.', 'error');
                 return;
             }
             
@@ -127,21 +106,21 @@ document.addEventListener('DOMContentLoaded', function() {
             const originalText = submitBtn.textContent;
             submitBtn.textContent = 'Creating Account...';
             
+            // Create form data
+            const formData = new FormData(signupForm);
+            
             // Send registration request
             fetch('register_process.php', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(formData)
+                body: formData
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
                     showMessage(data.message, 'success');
-                    // Redirect to dashboard or success page
+                    // Redirect to dashboard
                     setTimeout(() => {
-                        window.location.href = 'dashboard.php'; // Create this page
+                        window.location.href = 'dashboard.php';
                     }, 1500);
                 } else {
                     showMessage(data.message, 'error');
@@ -180,6 +159,7 @@ document.addEventListener('DOMContentLoaded', function() {
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
             transform: translateX(100%);
             transition: transform 0.3s ease;
+            max-width: 400px;
         `;
         
         if (type === 'success') {
